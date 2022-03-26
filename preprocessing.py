@@ -47,8 +47,9 @@ class ScienceIE:
 
     def lemmatize(self, text):
         self.doc = self.nlp(text)
+        lem_list = list(map(lambda x: x.lemma_, self.doc))
         lem_text = ' '.join(map(lambda x: x.lemma_, self.doc))
-        return lem_text
+        return lem_list, lem_text
 
     def lemmatize_kw_dict(self, text, word_kw_dict):
         lem_word_offsets = dict()
@@ -137,7 +138,7 @@ class ScienceIE:
         word_kw_dict = self.to_word_index(text, kw_dict)
         # print(word_kw_dict)
         # the act of lemmatizing is adding additional space to a space token
-        lem_text = self.lemmatize(text)
+        lem_list, lem_text = self.lemmatize(text)
         # doc = self.nlp(text)            # tokenize text
         # str_tokens = ' '.join(list(map(lambda x: str(x), doc)))
         # print(str_tokens)
@@ -151,6 +152,7 @@ class ScienceIE:
         # print(lem_kw_char_offsets)
         self.json_file[filename] = dict()
         self.json_file[filename]['lem_text'] = lem_text
+        self.json_file[filename]['lem_list'] = lem_list
         self.json_file[filename]['lem_keywords_word_offset'] = lem_kw_word_offsets
         self.json_file[filename]['lem_keywords_char_offset'] = lem_kw_char_offsets
         # print(self.json_file[filename]['lem_keywords'])
@@ -163,11 +165,11 @@ class ScienceIE:
         self.json_file[filename]['keywords'] = kw_dict
 
     def tokenize(self, text, filename):
-        tokens = word_tokenize(text)
+        doc = self.nlp(text)
+        tokens = list(map(lambda x: str(x), doc))
         self.json_file[filename]['word_tokens'] = tokens
 
     def pos(self, text, filename):
-        # pos = pos_tag(word_tokenize(text))
         if self.doc == None:
             self.lemmatize(text)
         pos = list(map(lambda x: [x.lemma_, x.tag_], self.doc))
