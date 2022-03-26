@@ -50,15 +50,18 @@ class ScienceIE:
         lem_text = ' '.join(map(lambda x: x.lemma_, self.doc))
         return lem_text
 
-    def lemmatize_kw_dict(self, lem_text, word_kw_dict):
+    def lemmatize_kw_dict(self, text, word_kw_dict):
         lem_word_offsets = dict()
         lem_char_offsets = dict()
-        lem_split = lem_text.split(' ')
+        # lem_split = lem_text.split(' ')       <-- splitting by ' ' on whitespaces gave a different token list
+        self.doc = self.nlp(text)
+        lem_list = list(map(lambda x: x.lemma_, self.doc))
+        # lem_text = ' '.join(map(lambda x: x.lemma_, self.doc))
         lem_char_counts = [0]
         char_index = 0
 
         # get the character offsets for the beginning of each word
-        for lem in lem_split:
+        for lem in lem_list:
             char_index += len(lem) + 1
             lem_char_counts.append(char_index)
 
@@ -66,7 +69,7 @@ class ScienceIE:
         for _, value in word_kw_dict.items():
             for v in value:
                 try:
-                    key = ' '.join(lem_split[v[0]: v[1]])
+                    key = ' '.join(lem_list[v[0]: v[1]])
                     if key not in lem_word_offsets:
                         lem_word_offsets[key] = []
                         lem_char_offsets[key] = []
@@ -85,14 +88,15 @@ class ScienceIE:
     def to_word_index(self, text, kw_dict):
         doc = self.nlp(text)            # tokenize text
         str_tokens = list(map(lambda x: str(x), doc))
-        print(str_tokens)
         char_to_word_map = []
         curr_word = ''
         curr_word_index = 0
-
         for c in text:
             # space or newline is included as part of a word
+            # is it a token by itself or part of a word?
             if c == ' ' or c == '\n':
+                if c == str_tokens[curr_word_index]:
+                    curr_word_index += 1
                 char_to_word_map.append(curr_word_index)
                 curr_word = ''
                 continue
@@ -100,12 +104,11 @@ class ScienceIE:
 
             if curr_word == str_tokens[curr_word_index]:
                 char_to_word_map.extend([curr_word_index for k in curr_word])
-                curr_word = ''
                 curr_word_index += 1
+                curr_word = ''
         if len(char_to_word_map) != len(text):
             raise Exception(
                 f'len char map: {len(char_to_word_map)} len text: {len(text)}\n{text}\n{str_tokens}\n{char_to_word_map}')
-        # print(char_to_word_map)
         new_dict = dict()
         # To check: key is not in tokenized form yet in new_dict
         # 'ni-usb 6009 analog-to-digital converter': [[77, 87, 'Material']]
@@ -135,15 +138,16 @@ class ScienceIE:
         # print(word_kw_dict)
         # the act of lemmatizing is adding additional space to a space token
         lem_text = self.lemmatize(text)
-        doc = self.nlp(text)            # tokenize text
-        str_tokens = list(map(lambda x: str(x), doc))
-        print(str_tokens)
+        # doc = self.nlp(text)            # tokenize text
+        # str_tokens = ' '.join(list(map(lambda x: str(x), doc)))
+        # print(str_tokens)
         # self.doc = self.nlp(text)
-        # lem_text = ' '.join(map(lambda x: x.lemma_, self.doc))
-        print(lem_text)
-        print(" ".join(lem_text.split()))
+        # lem_text = list(map(lambda x: x.lemma_, self.doc))
+        # print(lem_text)
+        # print(" ".join(lem_text.split()))
+        # print(lem_text)
         lem_kw_char_offsets, lem_kw_word_offsets = self.lemmatize_kw_dict(
-            lem_text, word_kw_dict)
+            text, word_kw_dict)
         # print(lem_kw_char_offsets)
         self.json_file[filename] = dict()
         self.json_file[filename]['lem_text'] = lem_text
@@ -242,13 +246,9 @@ class ScienceIE:
 
                             # print("Spans don't match for anno " +
                             #      l.strip() + " in file " + f)
-            # print(f'kw dict: {kw_dict}')
-            # print(f'after lemmatization: {kw_dict_lem}')
-            normalized_text = re.sub(
-                ' +', ' ', unicodedata.normalize("NFKD", text))
+            normalized_text = unicodedata.normalize("NFKD", text)
+            dp_whitespace_text = re.sub(' +', ' ', normalized_text)
 
-            print("hi")
-            print(normalized_text)
             self.lematize_text_and_kw(normalized_text, kw_dict, f)
 
             # self.get_text(text, f)
