@@ -1,5 +1,5 @@
 # CS4248 Project (Science IE)
 
-The repository consists of code for keyphrase extraction and classification from Scientific Papers. 
+Code for keyphrase extraction and classification from Scientific Papers using four types of models: SVM, Bidirectional LSTM, Bidirectional LSTM+CRF and Transformers. 
 
 The dataset for training and testing the models can be found here: https://scienceie.github.io/resources.html
